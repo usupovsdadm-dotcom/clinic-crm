@@ -37,7 +37,7 @@ function seed(): DB {
   const appts: Appt[] = []; let r = 7;
   const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
   const today = ymd(new Date());
-  for (let dd = -35; dd <= 7; dd++) {
+  for (let dd = -70; dd <= 7; dd++) {
     const date = addDays(today, dd); const wd = new Date(date + "T12:00").getDay(); if (wd === 0) continue;
     for (const d of doctors) {
       let t = DAY_START + (rnd() < .5 ? 0 : 30);
@@ -45,7 +45,7 @@ function seed(): DB {
         if (rnd() < (dd < 0 ? .7 : .45)) {
           const s = SERV[d.id === "d4" ? 3 : Math.floor(rnd() * 3)];
           const st = dd < 0 ? (rnd() < .05 ? "noshow" : "paid") : dd === 0 && t < new Date().getHours() * 60 ? "paid" : rnd() < .6 ? "confirmed" : "new";
-          appts.push({ id: uid(), pid: "p" + Math.floor(rnd() * patients.length), did: d.id, cab: d.cab, date, start: t, dur: s[2], service: s[0], status: st, price: s[1], online: rnd() < .34 });
+          appts.push({ id: uid(), pid: "p" + Math.floor(rnd() * Math.min(patients.length, 8 + Math.floor((dd + 70) / 4.5))), did: d.id, cab: d.cab, date, start: t, dur: s[2], service: s[0], status: st, price: s[1], online: rnd() < .34 });
           t += s[2];
         } else t += 60;
       }
@@ -64,7 +64,7 @@ function seed(): DB {
   return { doctors, cabinets, patients, appts, feed, tasks };
 }
 
-const KEY = "clinic-crm-db-v1";
+const KEY = "clinic-crm-db-v2";
 let mem: DB | null = null; const subs = new Set<() => void>();
 function load(): DB { if (mem) return mem; try { const s = localStorage.getItem(KEY); mem = s ? JSON.parse(s) : seed(); } catch { mem = seed(); } return mem!; }
 export function save(fn: (db: DB) => void) { const db = structuredClone(load()); fn(db); mem = db; try { localStorage.setItem(KEY, JSON.stringify(db)); } catch { alert("Хранилище браузера переполнено — файл слишком большой для прототипа"); } subs.forEach(f => f()); }
