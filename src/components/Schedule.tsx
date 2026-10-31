@@ -64,7 +64,7 @@ export default function Schedule({ db, role, onBook, onOpen, myDoc }: { db: DB; 
         {cols.map(c => <div key={c.key} className="relative border-l border-[#f3f0f9]">
           {Array.from({ length: rows }, (_, i) => { const t = DAY_START + i * STEP; return <div key={i} style={{ height: ROW }} onClick={() => clickSlot(c, t)} onDragOver={e => e.preventDefault()} onDrop={() => dropTo(c, t)} className={`border-t border-[#f3f0f9] ${role !== "owner" ? "hover:bg-brand-bg cursor-pointer" : ""} group`}><span className="hidden group-hover:block text-xs text-brand/60 p-1">{role !== "owner" && "+ " + hm(t)}</span></div>; })}
           {db.appts.filter(a => inCol(a, c)).map(a => { const p = db.patients.find(x => x.id === a.pid)!; const doc = db.doctors.find(x => x.id === a.did)!; const cab = db.cabinets.find(x => x.id === a.cab)!;
-            return <div key={a.id} draggable={role !== "owner"} onDragStart={() => setDrag(a.id)} onDragEnd={() => setDrag(null)} onClick={() => onOpen(a.pid)} title={`${fio(p)} · ${a.service}`}
+            return <div key={a.id} draggable={role !== "owner"} onDragStart={() => setDrag(a.id)} onDragEnd={() => setDrag(null)} onDragOver={e => e.preventDefault()} onDrop={e => { e.stopPropagation(); dropTo(c, a.start); }} onClick={() => onOpen(a.pid)} title={`${fio(p)} · ${a.service}`}
               className={`absolute left-1 right-1 rounded-xl border-l-4 px-2 py-1 text-xs cursor-pointer overflow-hidden hover:shadow-card ${stCls[a.status]} ${drag === a.id ? "opacity-40" : ""}`}
               style={{ top: (a.start - DAY_START) / STEP * ROW + 2, height: a.dur / STEP * ROW - 4 }}>
               <b className="block text-[13px] leading-tight break-words">{fio(p)}</b>
