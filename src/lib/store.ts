@@ -83,6 +83,7 @@ export function conflict(db: DB, a: { id?: string; did: string; cab: string; dat
       if (b.cab === a.cab) { const d = db.doctors.find(x => x.id === b.did)!; return `${db.cabinets.find(c => c.id === a.cab)?.name} занят: ${short(d)} ${hm(b.start)}–${hm(b.start + b.dur)}`; }
     }
   }
+  if (new Date(a.date + "T12:00").getDay() === 0) return "Воскресенье — выходной";
   if (a.start < DAY_START || a.start + a.dur > DAY_END) return "Вне рабочего времени";
   return null;
 }
@@ -91,3 +92,5 @@ export function useLocal<T>(k: string, init: T): [T, (v: T) => void] {
   useEffect(() => { const s = localStorage.getItem(k); if (s) setV(JSON.parse(s)); }, [k]);
   return [v, useCallback((x: T) => { setV(x); localStorage.setItem(k, JSON.stringify(x)); }, [k])];
 }
+
+export const workday = () => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() + 1); return ymd(d); };

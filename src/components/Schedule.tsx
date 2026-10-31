@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import { DB, Role, Appt, save, conflict, fio, short, hm, addDays, ymd, DAY_START, DAY_END, STEP } from "@/lib/store";
+import { DB, Role, Appt, save, conflict, fio, short, hm, addDays, ymd, DAY_START, DAY_END, STEP, workday } from "@/lib/store";
 const ROW = 44; const WD = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
 const M = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 const stCls: Record<string, string> = { paid: "border-okc bg-okbg", confirmed: "border-brand bg-brand-soft", new: "border-amber-500 bg-amber-50", noshow: "border-gray-400 bg-gray-100 opacity-60" };
 const stTxt: Record<string, string> = { paid: "оплачено", confirmed: "подтвердил ✓", new: "ждём подтверждения", noshow: "неявка" };
 export type Slot = { did: string; date: string; start: number };
 export default function Schedule({ db, role, onBook, onOpen, myDoc }: { db: DB; role: Role; onBook: (s: Slot) => void; onOpen: (pid: string) => void; myDoc: string }) {
-  const [date, setDate] = useState(ymd(new Date()));
+  const [date, setDate] = useState(workday());
   const [view, setView] = useState<"day" | "week">("day");
   const [group, setGroup] = useState<"doc" | "cab">("doc");
   const [wdoc, setWdoc] = useState(role === "doctor" ? myDoc : "d1");
@@ -49,7 +49,7 @@ export default function Schedule({ db, role, onBook, onOpen, myDoc }: { db: DB; 
         <span className="text-mute">{db.doctors.length} врача · {dayAppts.length} записей · {free} свободных слотов</span></div>
       <div className="flex flex-wrap gap-2 items-center">
         <button className="btn-g" onClick={() => setDate(addDays(date, view === "week" ? -7 : -1))}>‹</button>
-        <button className="btn-g" onClick={() => setDate(ymd(new Date()))}>Сегодня</button>
+        <button className="btn-g" onClick={() => setDate(workday())}>Сегодня</button>
         <button className="btn-g" onClick={() => setDate(addDays(date, view === "week" ? 7 : 1))}>›</button>
         <div className="flex bg-brand-soft rounded-2xl p-1">{(["day", "week"] as const).map(v => <button key={v} onClick={() => setView(v)} className={`px-3 py-1 rounded-xl font-semibold ${view === v ? "bg-white text-brand shadow" : "text-brand/70"}`}>{v === "day" ? "День" : "Неделя"}</button>)}</div>
         {view === "day" ? <div className="flex bg-brand-soft rounded-2xl p-1">{(["doc", "cab"] as const).map(v => <button key={v} onClick={() => setGroup(v)} className={`px-3 py-1 rounded-xl font-semibold ${group === v ? "bg-white text-brand shadow" : "text-brand/70"}`}>{v === "doc" ? "Врачи" : "Кабинеты"}</button>)}</div>

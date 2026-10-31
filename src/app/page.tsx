@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useDB, useLocal, Role, resetDB } from "@/lib/store";
+import { useDB, useLocal, Role, resetDB, workday } from "@/lib/store";
 import Schedule, { Slot } from "@/components/Schedule";
 import Booking from "@/components/Booking";
 import { PatientList, PatientCard } from "@/components/Patients";
@@ -29,7 +29,7 @@ export default function Home() {
     <header className="md:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-brand-line px-4 py-2 flex items-center gap-3"><span className="font-extrabold text-brand">◆ Клиника</span><div className="flex-1">{RoleSw}</div></header>
     <main className="flex-1 p-3 md:p-6 pb-24 md:pb-6 min-w-0">
       {tab === "schedule" && <Schedule db={db} role={role} myDoc="d1" onBook={setSlot} onOpen={open} />}
-      {tab === "patients" && (pid ? <PatientCard db={db} role={role} pid={pid} onBack={() => go("patients")} onBook={() => setSlot({ did: "d1", date: new Date().toISOString().slice(0, 10), start: -1 })} /> : <PatientList db={db} role={role} onOpen={open} />)}
+      {tab === "patients" && (pid ? <PatientCard db={db} role={role} pid={pid} onBack={() => go("patients")} onBook={() => setSlot({ did: "d1", date: workday(), start: -1 })} /> : <PatientList db={db} role={role} onOpen={open} />)}
       {tab === "dash" && <Dashboard db={db} />}
     </main>
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-brand-line flex z-30">{tabs.map(([t, i, n]) => <button key={t} onClick={() => go(t)} className={`flex-1 py-2 text-xs ${tab === t ? "text-brand font-semibold" : "text-mute"}`}><div className="text-lg">{i}</div>{n}</button>)}

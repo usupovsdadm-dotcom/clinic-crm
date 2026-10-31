@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import { useDB, save, fioFull, hm, ymd, addDays, uid } from "@/lib/store";
+import { useDB, save, fioFull, hm, ymd, addDays, uid, workday } from "@/lib/store";
 import { freeSlots } from "@/components/Booking";
 const WD = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
 export default function Widget() {
-  const db = useDB(); const [did, setDid] = useState<string | null>(null); const [date, setDate] = useState(ymd(new Date()));
+  const db = useDB(); const [did, setDid] = useState<string | null>(null); const [date, setDate] = useState(workday());
   const [t, setT] = useState<number | null>(null); const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [code, setCode] = useState(""); const [sent, setSent] = useState(false); const [done, setDone] = useState("");
   if (!db) return null;
   const days = Array.from({ length: 10 }, (_, i) => addDays(ymd(new Date()), i)).filter(d => new Date(d + "T12:00").getDay() !== 0);
