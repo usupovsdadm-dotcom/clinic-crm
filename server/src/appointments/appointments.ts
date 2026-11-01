@@ -1,4 +1,4 @@
-import { Body, ConflictException, Controller, Get, Module, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, BadRequestException, ConflictException, Controller, Get, Module, Param, Patch, Post, Query } from "@nestjs/common";
 import { IsIn, IsISO8601, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit";
@@ -10,7 +10,9 @@ export class AppointmentsController {
   constructor(private db: PrismaService, private audit: AuditService) {}
   @Get("doctors") doctors(@User() u: AuthUser) { return this.db.doctor.findMany({ where: { clinicId: u.clinicId } }); }
   @Get("appointments") list(@User() u: AuthUser, @Query("from") from: string, @Query("to") to: string, @Query("doctorId") doctorId?: string) {
-    return this.db.appointment.findMany({ where: { clinicId: u.clinicId, startsAt: { gte: new Date(from), lt: new Date(to) }, doctorId: u.role === "doctor" ? u.doctorId! : doctorId }, include: { patient: { select: { id: true, fullName: true } }, doctor: true }, orderBy: { startsAt: "asc" } });
+    const f = from ? new Date(from) : new Date(Date.now() - 30 * 864e5), t = to ? new Date(to) : new Date(Date.now() + 90 * 864e5);
+    if (isNaN(+f) || isNaN(+t)) throw new BadRequestException("Неверные даты from/to");
+    return this.db.appointment.findMany({ where: { clinicId: u.clinicId, startsAt: { gte: f, lt: t }, doctorId: u.role === "doctor" ? u.doctorId! : doctorId }, include: { patient: { select: { id: true, fullName: true } }, doctor: true }, orderBy: { startsAt: "asc" } });
   }
   /** Свободные окна врача на день (для ИИ-подсказок и «отправить слоты в чат») */
   @Get("slots") async slots(@User() u: AuthUser, @Query("doctorId") doctorId: string, @Query("date") date: string, @Query("step") step = "30") {
