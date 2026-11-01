@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { isLive, loadConversations, sendMessage } from "@/lib/api";
 import { Sheet, Editor } from "@/app/multichat/attach";
 import { Triage, Analytics, Style } from "@/app/multichat/ai";
 import { Mailing, Channels } from "@/app/multichat/mock";
@@ -7,7 +8,7 @@ const P = "#6C4AD4";
 const CH: any = { tg: ["T", "#2AA3DF", "Telegram"], vk: ["В", "#0077FF", "ВКонтакте"], mx: ["М", "#8B3DFF", "Макс"], wa: ["W", "#25D366", "WhatsApp"] };
 const B = ({ ch, s = 16 }: any) => <span style={{ background: CH[ch][1], width: s, height: s, fontSize: s * .55 }} className="inline-flex items-center justify-center rounded-full text-white font-bold shrink-0">{CH[ch][0]}</span>;
 type M = { me: boolean; ch: string; x: string; t: string; s?: string };
-type C = { id: number; n: string; first: string; ch: string; u: number; wait?: string; tag?: string; doc: string; date: string; time: string; m: M[]; sug: string };
+type C = { apiId?: string; id: number; n: string; first: string; ch: string; u: number; wait?: string; tag?: string; doc: string; date: string; time: string; m: M[]; sug: string };
 const init: C[] = [
   { id: 1, n: "Анна Смирнова", first: "Анна", ch: "tg", u: 2, doc: "Иванов А.В.", date: "6 ноября", time: "14:00", sug: "Анна, на пятницу есть 16:00 и 16:30 у Иванова А.В. — какое время удобнее?", m: [{ me: false, ch: "tg", t: "10:20", x: "Здравствуйте! Я записана к Иванову на четверг 14:00" }, { me: true, ch: "tg", t: "10:22", x: "Здравствуйте, Анна! Да, вижу вашу запись.", s: "✓✓" }, { me: false, ch: "tg", t: "10:42", x: "Можно перенести запись на пятницу? Лучше после 16:00" }] },
   { id: 2, n: "Елена Кузнецова", first: "Елена", ch: "vk", u: 1, wait: "3 ч 12 мин", tag: "забыли", doc: "Сергеева Н.П.", date: "5 ноября", time: "11:00", sug: "Елена, извините за ожидание! Консультация кардиолога — 3 200 ₽. Записать вас на завтра 11:00?", m: [{ me: false, ch: "vk", t: "07:48", x: "Сколько стоит консультация кардиолога?" }] },
@@ -19,9 +20,10 @@ const now = () => new Date().toTimeString().slice(0, 5);
 export function Inbox() {
   const [cs, setCs] = useState(init); const [sel, setSel] = useState<number | null>(null); const [f, setF] = useState("all");
   const [txt, setTxt] = useState(""); const [att, setAtt] = useState<string | null>(null); const [ed, setEd] = useState(false); const [ghost, setGhost] = useState(true); const [card, setCard] = useState(false);
+  useEffect(() => { if (isLive()) loadConversations().then(r => setCs(r as C[])).catch(() => {}); }, []);
   const c = cs.find(x => x.id === sel) || null;
   const pick = (id: number) => { setSel(id); setTxt(""); setGhost(true); setAtt(null); setCs(cs.map(x => x.id === id ? { ...x, u: 0 } : x)); };
-  const send = () => { if (!c || !txt.trim()) return; setCs(cs.map(x => x.id === c.id ? { ...x, wait: undefined, tag: undefined, m: [...x.m, { me: true, ch: x.ch, x: txt, t: now(), s: "✓ отправлено" }] } : x)); setTxt(""); setGhost(false); };
+  const send = () => { if (!c || !txt.trim()) return; if (c.apiId) sendMessage(c.apiId, txt).catch(() => {}); setCs(cs.map(x => x.id === c.id ? { ...x, wait: undefined, tag: undefined, m: [...x.m, { me: true, ch: x.ch, x: txt, t: now(), s: "✓ отправлено" }] } : x)); setTxt(""); setGhost(false); };
   const accept = () => { if (c) { setTxt(c.sug); setGhost(false); } };
   const list = cs.filter(x => f === "all" || (f === "unread" ? x.u > 0 : f === "late" ? x.wait : x.ch === f));
   const unread = cs.reduce((a, x) => a + x.u, 0);

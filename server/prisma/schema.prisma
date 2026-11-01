@@ -1,0 +1,170 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum Role { owner admin doctor }
+enum ChannelType { telegram_bot telegram_user vk max whatsapp sms }
+enum Direction { in out }
+enum MsgStatus { queued sent delivered read failed received }
+enum ApptStatus { booked confirmed done no_show cancelled }
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("Europe/Moscow")
+  plan      String   @default("trial")
+  createdAt DateTime @default(now())
+  users     User[]
+  doctors   Doctor[]
+  patients  Patient[]
+  appointments Appointment[]
+  channels  Channel[]
+  conversations Conversation[]
+  templates Template[]
+  audit     AuditLog[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  doctorId  String?  @unique
+  doctor    Doctor?  @relation(fields: [doctorId], references: [id])
+  createdAt DateTime @default(now())
+  @@index([clinicId])
+}
+
+model Doctor {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  name      String
+  specialty String
+  room      String?
+  user      User?
+  appointments Appointment[]
+  @@index([clinicId])
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  fullName  String
+  phone     String
+  birthDate DateTime?
+  notes     String?
+  consentMailing   Boolean   @default(false)
+  consentAt        DateTime?
+  createdAt DateTime @default(now())
+  identities PatientIdentity[]
+  appointments Appointment[]
+  conversations Conversation[]
+  @@unique([clinicId, phone])
+}
+
+model PatientIdentity {
+  id        String      @id @default(uuid())
+  patientId String
+  patient   Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  channel   ChannelType
+  externalId String
+  username  String?
+  @@unique([channel, externalId, patientId])
+}
+
+model Appointment {
+  id        String     @id @default(uuid())
+  clinicId  String
+  clinic    Clinic     @relation(fields: [clinicId], references: [id])
+  doctorId  String
+  doctor    Doctor     @relation(fields: [doctorId], references: [id])
+  patientId String
+  patient   Patient    @relation(fields: [patientId], references: [id])
+  startsAt  DateTime
+  endsAt    DateTime
+  service   String?
+  status    ApptStatus @default(booked)
+  source    String     @default("admin")
+  createdAt DateTime   @default(now())
+  @@index([clinicId, startsAt])
+  @@index([doctorId, startsAt])
+}
+
+model Channel {
+  id        String      @id @default(uuid())
+  clinicId  String
+  clinic    Clinic      @relation(fields: [clinicId], references: [id])
+  type      ChannelType
+  title     String
+  secretEnc String?     // токен/сессия, AES-256-GCM
+  config    Json        @default("{}")
+  status    String      @default("disconnected")
+  createdAt DateTime    @default(now())
+  conversations Conversation[]
+  @@index([clinicId])
+}
+
+model Conversation {
+  id         String    @id @default(uuid())
+  clinicId   String
+  clinic     Clinic    @relation(fields: [clinicId], references: [id])
+  channelId  String
+  channel    Channel   @relation(fields: [channelId], references: [id])
+  patientId  String?
+  patient    Patient?  @relation(fields: [patientId], references: [id])
+  externalChatId String
+  assigneeId String?
+  unread     Int       @default(0)
+  lastMessageAt DateTime @default(now())
+  lastInboundAt DateTime?
+  messages   Message[]
+  @@unique([channelId, externalChatId])
+  @@index([clinicId, lastMessageAt])
+}
+
+model Message {
+  id         String    @id @default(uuid())
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction  Direction
+  text       String
+  attachments Json     @default("[]")
+  status     MsgStatus @default(queued)
+  externalId String?
+  authorId   String?
+  createdAt  DateTime  @default(now())
+  @@index([conversationId, createdAt])
+}
+
+model Template {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  name      String
+  category  String
+  body      String
+  attachments Json   @default("[]")
+  favorite  Boolean  @default(false)
+  waStatus  String?  // pending/approved/rejected для WhatsApp
+  updatedAt DateTime @updatedAt
+  @@index([clinicId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json     @default("{}")
+  ip        String?
+  createdAt DateTime @default(now())
+  @@index([clinicId, createdAt])
+}
