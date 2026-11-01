@@ -1,7 +1,23 @@
-158-160-175-130.sslip.io {
+(site) {
 	encode gzip
-	reverse_proxy api:4000
+	@app path /app /app/*
+	handle @app {
+		header {
+			Content-Security-Policy "frame-ancestors 'self' https://*.creatium.site https://creatium.io https://*.creatium.io"
+			-X-Frame-Options
+			Referrer-Policy strict-origin-when-cross-origin
+		}
+		root * /srv
+		try_files {path} {path}/index.html {path}.html
+		file_server
+	}
+	handle {
+		reverse_proxy api:4000
+	}
 }
-http://158.160.175.130 {
-	reverse_proxy api:4000
+158-160-175-130.sslip.io {
+	import site
+}
+http://158.160.175.130, http:// {
+	import site
 }
