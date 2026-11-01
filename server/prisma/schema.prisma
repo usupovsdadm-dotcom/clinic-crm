@@ -1,11 +1,43 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
 
-enum Role { owner admin doctor }
-enum ChannelType { telegram_bot telegram_user vk max whatsapp sms }
-enum Direction { in out }
-enum MsgStatus { queued sent delivered read failed received }
-enum ApptStatus { booked confirmed done no_show cancelled }
+enum Role {
+  owner
+  admin
+  doctor
+}
+enum ChannelType {
+  telegram_bot
+  telegram_user
+  vk
+  max
+  whatsapp
+  sms
+}
+enum Direction {
+  in
+  out
+}
+enum MsgStatus {
+  queued
+  sent
+  delivered
+  read
+  failed
+  received
+}
+enum ApptStatus {
+  booked
+  confirmed
+  done
+  no_show
+  cancelled
+}
 
 model Clinic {
   id        String   @id @default(uuid())

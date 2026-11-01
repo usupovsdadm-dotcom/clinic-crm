@@ -1,0 +1,7 @@
+158-160-175-130.sslip.io {
+	encode gzip
+	reverse_proxy api:4000
+}
+http://158.160.175.130 {
+	reverse_proxy api:4000
+}
