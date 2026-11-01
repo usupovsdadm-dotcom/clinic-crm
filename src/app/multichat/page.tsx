@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import * as A from "./ai";
+import { Sheet, MobileAttach, Editor } from "./attach";
 const P = "#6C4AD4";
 const CH: Record<string, { l: string; c: string; n: string }> = {
   tg: { l: "T", c: "#2AA3DF", n: "Telegram" }, vk: { l: "В", c: "#0077FF", n: "ВКонтакте" },
@@ -94,6 +96,12 @@ const Side = ({ a }: { a: string }) => <div className="w-[64px] bg-white border-
 export default function Page() {
   const [v, setV] = useState("inbox");
   useEffect(() => { setV(location.hash.slice(1) || "inbox"); }, []);
+  if (v == "ai-composer-m") return <A.ComposerMobile />;
+  if (v.startsWith("ai-")) { const M: any = { "ai-digest": A.Digest, "ai-triage": A.Triage, "ai-composer": A.ComposerView, "ai-style": A.Style, "ai-analytics": A.Analytics, "ai-schedule": A.Schedule }; const X = M[v]; return <div className="h-screen flex bg-slate-50 text-slate-800"><Side a={v == "ai-style" ? "channels" : "inbox"} /><div className="flex-1 min-w-0 h-full"><X /></div></div>; }
+  if (v.startsWith("a-")) return <MobileAttach tab={v.slice(2)} />;
+  if (v == "ed-m") return <Editor />;
+  if (v == "d-attach" || v == "d-ed") return <div className="h-screen flex bg-slate-50 text-slate-800 relative"><Side a="inbox" /><div className="flex-1 min-w-0 h-full"><Inbox /></div>
+    {v == "d-attach" ? <div className="absolute left-[400px] bottom-[70px] z-20"><Sheet tab="tpl" desk /></div> : <><div className="absolute inset-0 bg-black/40 z-10" /><div className="absolute inset-0 z-20 flex items-center justify-center"><Editor desk /></div></>}</div>;
   if (v.startsWith("m-")) return <div className="h-screen bg-slate-50"><Inbox mobile conv={v == "m-conv"} /></div>;
   return <div className="h-screen flex bg-slate-50 text-slate-800"><Side a={v} /><div className="flex-1 min-w-0 h-full">
     <div className="absolute top-2 right-3 text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded z-10">МАКЕТ · демо-данные</div>
