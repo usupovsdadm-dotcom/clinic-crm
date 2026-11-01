@@ -5,23 +5,24 @@ import Schedule, { Slot } from "@/components/Schedule";
 import Booking from "@/components/Booking";
 import { PatientList, PatientCard } from "@/components/Patients";
 import Dashboard from "@/components/Dashboard";
+import Multichat from "@/components/Multichat";
 const bp = process.env.NEXT_PUBLIC_BP || "";
-type Tab = "schedule" | "patients" | "dash";
+type Tab = "schedule" | "patients" | "dash" | "chat" | "chatan" | "chatstyle";
 export default function Home() {
   const db = useDB(); const [role, setRole] = useLocal<Role>("crm-role", "admin");
-  const [tab, setTab] = useState<Tab>("schedule"); const [pid, setPid] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("schedule"); const [cv, setCv] = useState("inbox"); const [pid, setPid] = useState<string | null>(null);
   const [slot, setSlot] = useState<Slot | null>(null); const [toast, setToast] = useState<string | null>(null);
-  useEffect(() => { const h = location.hash.slice(1); if (h === "patients" || h === "dash") setTab(h); if (h.startsWith("p/")) { setTab("patients"); setPid(h.slice(2)); } const r = new URLSearchParams(location.search).get("role"); if (r === "admin" || r === "doctor" || r === "owner") setRole(r); }, []);
-  useEffect(() => { if (role === "doctor" && tab === "dash") setTab("schedule"); }, [role, tab]);
+  useEffect(() => { const hc = () => { const h = location.hash.slice(1); if (h.startsWith("chat/")) { setTab("chat"); setCv(h.slice(5)); } else if (h === "chat") { setTab("chat"); setCv("inbox"); } else if (h === "chatan" || h === "chatstyle") setTab(h); }; window.addEventListener("hashchange", hc); const h = location.hash.slice(1); hc(); if (h === "patients" || h === "dash") setTab(h); if (h.startsWith("p/")) { setTab("patients"); setPid(h.slice(2)); } const r = new URLSearchParams(location.search).get("role"); if (r === "admin" || r === "doctor" || r === "owner") setRole(r); }, []);
+  useEffect(() => { if (role === "doctor" && (tab === "dash" || tab.startsWith("chat"))) setTab("schedule"); }, [role, tab]);
   if (!db) return <div className="p-10 text-mute">Загрузка…</div>;
-  const tabs: [Tab, string, string][] = [["schedule", "📅", "Расписание"], ["patients", "👤", "Пациенты"], ...(role !== "doctor" ? [["dash", "📊", "Аналитика"] as [Tab, string, string]] : [])];
-  const go = (t: Tab) => { setTab(t); setPid(null); location.hash = t; };
+  const tabs: [Tab, string, string][] = [["schedule", "📅", "Расписание"], ["patients", "👤", "Пациенты"], ...(role !== "doctor" ? [["chat", "💬", "Мультичат"] as [Tab, string, string]] : []), ...(role !== "doctor" ? [["dash", "📊", "Аналитика"] as [Tab, string, string]] : [])];
+  const go = (t: Tab) => { setTab(t); if (t === "chat") setCv("inbox"); setPid(null); location.hash = t; };
   const open = (id: string) => { setTab("patients"); setPid(id); location.hash = "p/" + id; };
   const RoleSw = <div className="flex bg-brand-soft rounded-2xl p-1 text-xs">{([["admin", "Админ"], ["doctor", "Врач"], ["owner", "Владелец"]] as [Role, string][]).map(([r, t]) => <button key={r} onClick={() => setRole(r)} className={`flex-1 px-2 py-1 rounded-xl font-semibold ${role === r ? "bg-white text-brand shadow" : "text-brand/70"}`}>{t}</button>)}</div>;
   return <div className="md:flex min-h-screen">
     <aside className="hidden md:flex flex-col w-56 bg-white border-r border-brand-line p-4 gap-1 sticky top-0 h-screen">
       <div className="font-extrabold text-xl text-brand mb-5">◆ Клиника</div>
-      {tabs.map(([t, i, n]) => <button key={t} onClick={() => go(t)} className={`text-left px-3 py-2.5 rounded-xl ${tab === t ? "bg-brand-soft text-brand font-semibold" : "text-[#5C4E78] hover:bg-brand-bg"}`}>{i} {n}</button>)}
+      {[...tabs, ...(role !== "doctor" ? [["chatan", "✦", "Аналитика переписок"], ["chatstyle", "✦", "Стиль общения"]] as [Tab, string, string][] : [])].map(([t, i, n]) => <button key={t} onClick={() => go(t)} className={`text-left px-3 py-2.5 rounded-xl ${tab === t ? "bg-brand-soft text-brand font-semibold" : "text-[#5C4E78] hover:bg-brand-bg"}`}>{i} {n}</button>)}
       <a href={bp + "/widget/"} target="_blank" className="px-3 py-2.5 rounded-xl text-[#5C4E78] hover:bg-brand-bg">🌐 Онлайн-запись ↗</a>
       <div className="mt-auto"><div className="text-xs text-mute mb-1">Роль (демо)</div>{RoleSw}
         <div className="text-xs text-mute mt-2">{role === "doctor" ? "Вы: Иванова П.С. · контакты скрыты" : role === "owner" ? "Только просмотр расписания" : "Полный доступ к записи"}</div>
@@ -31,6 +32,9 @@ export default function Home() {
       {tab === "schedule" && <Schedule db={db} role={role} myDoc="d1" onBook={setSlot} onOpen={open} />}
       {tab === "patients" && (pid ? <PatientCard db={db} role={role} pid={pid} onBack={() => go("patients")} onBook={() => setSlot({ did: "d1", date: workday(), start: -1 })} /> : <PatientList db={db} role={role} onOpen={open} />)}
       {tab === "dash" && <Dashboard db={db} />}
+      {tab === "chat" && <Multichat view={cv} />}
+      {tab === "chatan" && <Multichat view="analytics" />}
+      {tab === "chatstyle" && <Multichat view="style" />}
     </main>
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-brand-line flex z-30">{tabs.map(([t, i, n]) => <button key={t} onClick={() => go(t)} className={`flex-1 py-2 text-xs ${tab === t ? "text-brand font-semibold" : "text-mute"}`}><div className="text-lg">{i}</div>{n}</button>)}
       <a href={bp + "/widget/"} className="flex-1 py-2 text-xs text-mute text-center"><div className="text-lg">🌐</div>Онлайн</a></nav>
