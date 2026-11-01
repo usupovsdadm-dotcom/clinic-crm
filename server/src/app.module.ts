@@ -12,10 +12,11 @@ import { TemplatesModule } from "./templates/templates";
 import { ChannelsModule } from "./channels/channels";
 import { ConversationsModule } from "./conversations/conversations";
 import { AiModule } from "./ai/ai";
+import { ClinicModule } from "./clinic/clinic";
 @Controller() class Health { @Public() @Get("health") h() { return { ok: true }; } }
 @Module({
   imports: [PrismaModule, JwtModule.register({ global: true, secret: process.env.JWT_SECRET || "dev-secret", signOptions: { expiresIn: "12h" } }), ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
-    AuditModule, AuthModule, PatientsModule, AppointmentsModule, TemplatesModule, ChannelsModule, ConversationsModule, AiModule],
+    AuditModule, AuthModule, PatientsModule, AppointmentsModule, TemplatesModule, ChannelsModule, ConversationsModule, AiModule, ClinicModule],
   controllers: [Health],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }, { provide: APP_GUARD, useClass: AuthGuard }],
 })

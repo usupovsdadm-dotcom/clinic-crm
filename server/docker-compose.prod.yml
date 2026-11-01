@@ -10,7 +10,7 @@ services:
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck: { test: ["CMD-SHELL", "pg_isready -U crm"], interval: 10s, retries: 5 }
   api:
-    build: .
+    build: { context: ., dockerfile: Dockerfile.prebuilt }
     restart: unless-stopped
     env_file: .env
     depends_on: { db: { condition: service_healthy } }

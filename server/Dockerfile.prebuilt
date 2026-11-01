@@ -1,0 +1,10 @@
+# Runtime-only image from artifacts built on the box (server's npm registry access is unreliable).
+# Context: ./prebuilt containing node_modules, dist, prisma, package.json
+FROM node:20-bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY .engines/ /engines/
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/engines/schema-engine PRISMA_QUERY_ENGINE_LIBRARY=/engines/libquery_engine.so.node NODE_ENV=production
+WORKDIR /app
+COPY prebuilt/ ./
+USER node
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/main.js"]

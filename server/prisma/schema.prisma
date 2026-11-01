@@ -46,6 +46,7 @@ model Clinic {
   city      String?
   timezone  String   @default("Europe/Moscow")
   plan      String   @default("trial")
+  settings  Json     @default("{}")
   createdAt DateTime @default(now())
   users     User[]
   doctors   Doctor[]

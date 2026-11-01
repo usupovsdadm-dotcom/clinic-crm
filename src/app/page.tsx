@@ -6,7 +6,8 @@ import Booking from "@/components/Booking";
 import { PatientList, PatientCard } from "@/components/Patients";
 import Dashboard from "@/components/Dashboard";
 import Multichat from "@/components/Multichat";
-import { DemoBanner, AuthScreen, RealHome } from "@/components/Auth";
+import { DemoBanner, AuthScreen } from "@/components/Auth";
+import { RealCRM } from "@/components/RealCRM";
 const bp = process.env.NEXT_PUBLIC_BP || "";
 type Tab = "schedule" | "patients" | "dash" | "chat" | "chatan" | "chatstyle";
 export default function Home() {
@@ -15,7 +16,7 @@ export default function Home() {
   const [slot, setSlot] = useState<Slot | null>(null); const [toast, setToast] = useState<string | null>(null);
   useEffect(() => { setReal(!!localStorage.getItem("crm-token")); const hc = () => { const h = location.hash.slice(1); setAuth(h === "register" || h === "login" ? h : ""); if (h.startsWith("chat/")) { setTab("chat"); setCv(h.slice(5)); } else if (h === "chat") { setTab("chat"); setCv("inbox"); } else if (h === "chatan" || h === "chatstyle") setTab(h); }; window.addEventListener("hashchange", hc); const h = location.hash.slice(1); hc(); if (h === "patients" || h === "dash") setTab(h); if (h.startsWith("p/")) { setTab("patients"); setPid(h.slice(2)); } const r = new URLSearchParams(location.search).get("role"); if (r === "admin" || r === "doctor" || r === "owner") setRole(r); }, []);
   useEffect(() => { if (role === "doctor" && (tab === "dash" || tab.startsWith("chat"))) setTab("schedule"); }, [role, tab]);
-  if (real) return <RealHome onLogout={() => { setReal(false); location.hash = ""; }} />;
+  if (real) return <RealCRM onLogout={() => { setReal(false); location.hash = ""; }} />;
   if (auth) return <AuthScreen mode={auth} onDone={() => { setReal(true); location.hash = ""; }} />;
   if (!db) return <div className="p-10 text-mute">Загрузка…</div>;
   const tabs: [Tab, string, string][] = [["schedule", "📅", "Расписание"], ["patients", "👤", "Пациенты"], ...(role !== "doctor" ? [["chat", "💬", "Мультичат"] as [Tab, string, string]] : []), ...(role !== "doctor" ? [["dash", "📊", "Аналитика"] as [Tab, string, string]] : [])];
